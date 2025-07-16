@@ -96,16 +96,19 @@ function AdminPanel({
   if (!showAdminPanel) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className={`modal-content ${isDarkMode ? 'dark' : ''} max-w-6xl w-full p-8 relative rounded-xl shadow-2xl transform transition-all duration-300 scale-100 opacity-100 overflow-y-auto max-h-[90vh]`}> {/* Increased max-w to max-w-6xl */}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      {/* Increased max-w to max-w-screen-lg for wider container, enhanced shadow and border */}
+      <div className={`modal-content ${isDarkMode ? 'dark' : ''} max-w-screen-lg w-full p-8 relative rounded-xl shadow-2xl transform transition-all duration-300 scale-100 opacity-100 overflow-y-auto max-h-[90vh] ${isDarkMode ? 'border border-gray-600' : 'border border-gray-200'}`}>
+        {/* Close Button: Enhanced hover effect */}
         <button
           onClick={() => setShowAdminPanel(false)}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-50 text-3xl font-bold transition-colors duration-200"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-50 text-3xl font-bold transition-colors duration-200 hover:rotate-90 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full"
           aria-label="Close Admin Panel"
         >
           &times;
         </button>
-        <h2 className={`text-4xl font-extrabold mb-8 text-center ${isDarkMode ? 'text-blue-300' : 'text-blue-700'} drop-shadow-lg`}>
+        {/* Title: Enhanced typography */}
+        <h2 className={`text-4xl font-extrabold mb-8 text-center ${isDarkMode ? 'text-blue-300' : 'text-blue-700'} drop-shadow-lg tracking-tight`}>
           Admin Dashboard
         </h2>
         {adminMessage && (
@@ -114,9 +117,9 @@ function AdminPanel({
           </p>
         )}
 
-        {/* Add New Contest Text */}
-        <div className={`p-6 rounded-lg mb-8 shadow-lg transition-all duration-300
-          ${isDarkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200'}`}>
+        {/* Add New Contest Text Section: Enhanced background and shadow */}
+        <div className={`p-6 rounded-lg mb-8 shadow-xl transition-all duration-300
+          ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200'}`}>
           <h3 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
             Create New Contest Text
           </h3>
@@ -139,8 +142,8 @@ function AdminPanel({
           </div>
 
           <textarea
-            className={`w-full p-3 mb-4 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all duration-200
-              ${isDarkMode ? 'bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'}
+            className={`w-full p-3 mb-4 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200
+              ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'}
               ${useAiForContestText ? 'opacity-60 cursor-not-allowed' : ''}`}
             rows="5"
             placeholder="Enter new contest text here..."
@@ -164,8 +167,8 @@ function AdminPanel({
             <select
               value={newContestDifficulty}
               onChange={(e) => setNewContestDifficulty(e.target.value)}
-              className={`flex-1 p-3 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all duration-200
-                ${isDarkMode ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'}`}
+              className={`flex-1 p-3 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200
+                ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'}`}
             >
               <option value="easy">Easy</option>
               <option value="medium">Medium</option>
@@ -174,8 +177,8 @@ function AdminPanel({
             <select
               value={newContestCategory}
               onChange={(e) => setNewContestCategory(e.target.value)}
-              className={`flex-1 p-3 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all duration-200
-                ${isDarkMode ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'}`}
+              className={`flex-1 p-3 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200
+                ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-800'}`}
             >
               <option value="general">General</option>
               <option value="quotes">Quotes</option>
@@ -184,16 +187,16 @@ function AdminPanel({
           </div>
           <button
             onClick={handleAdd}
-            className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+            className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             disabled={isGeneratingAiText || newContestText.trim() === ''} // Disable if AI is generating or text is empty
           >
             Add New Contest Text
           </button>
         </div>
 
-        {/* List Existing Contest Texts */}
-        <div className={`p-6 rounded-lg mb-8 shadow-lg transition-all duration-300
-          ${isDarkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gradient-to-br from-purple-50 to-pink-100 border border-purple-200'}`}>
+        {/* List Existing Contest Texts Section: Enhanced background and shadow */}
+        <div className={`p-6 rounded-lg mb-8 shadow-xl transition-all duration-300
+          ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gradient-to-br from-purple-50 to-pink-100 border border-purple-200'}`}>
           <h3 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
             Manage Existing Contest Texts
           </h3>
@@ -204,8 +207,8 @@ function AdminPanel({
           ) : (
             <ul className="space-y-3 max-h-64 overflow-y-auto pr-2">
               {contestTexts.map((textItem) => (
-                <li key={textItem.id} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-lg shadow-sm
-                  ${isDarkMode ? 'bg-gray-800 text-gray-200 hover:bg-gray-700' : 'bg-white text-gray-700 hover:bg-gray-50'} transition-colors duration-200`}>
+                <li key={textItem.id} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-lg shadow-md
+                  ${isDarkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-50'} transition-colors duration-200`}>
                   <div className="flex-1 text-sm font-medium pr-4 mb-2 sm:mb-0">
                     <p className="truncate">{textItem.text}</p>
                     <p className="text-xs opacity-70 mt-1">
@@ -214,7 +217,7 @@ function AdminPanel({
                   </div>
                   <button
                     onClick={() => handleDeleteContestText(textItem.id)}
-                    className="py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm font-semibold transition-colors duration-300 shadow-sm hover:shadow-md"
+                    className="py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm font-semibold transition-colors duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
                     Delete
                   </button>
@@ -224,9 +227,9 @@ function AdminPanel({
           )}
         </div>
 
-        {/* User Management Section */}
-        <div className={`p-6 rounded-lg mb-8 shadow-lg transition-all duration-300
-          ${isDarkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gradient-to-br from-green-50 to-teal-100 border border-green-200'}`}>
+        {/* User Management Section: Enhanced background and shadow */}
+        <div className={`p-6 rounded-lg mb-8 shadow-xl transition-all duration-300
+          ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gradient-to-br from-green-50 to-teal-100 border border-green-200'}`}>
           <h3 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
             User Management
           </h3>
@@ -237,8 +240,8 @@ function AdminPanel({
           ) : (
             <ul className="space-y-3 max-h-64 overflow-y-auto pr-2">
               {usersData.map((user) => (
-                <li key={user.id} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-lg shadow-sm
-                  ${isDarkMode ? 'bg-gray-800 text-gray-200 hover:bg-gray-700' : 'bg-white text-gray-700 hover:bg-gray-50'} transition-colors duration-200`}>
+                <li key={user.id} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-lg shadow-md
+                  ${isDarkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-50'} transition-colors duration-200`}>
                   <div className="flex-1 pr-4 mb-2 sm:mb-0">
                     <span className="font-semibold text-sm truncate">{user.email}</span>
                     <span className={`ml-2 text-xs px-2 py-1 rounded-full ${user.isAdmin ? 'bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200' : 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-300'}`}>
@@ -248,14 +251,14 @@ function AdminPanel({
                   <div className="flex flex-wrap gap-2 justify-end">
                     <button
                       onClick={() => handleToggleAdminStatus(user.id, user.isAdmin)}
-                      className={`py-2 px-4 rounded-md text-sm font-semibold transition-colors duration-300 shadow-sm hover:shadow-md
+                      className={`py-2 px-4 rounded-md text-sm font-semibold transition-colors duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2
                         ${user.isAdmin ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
                     >
                       {user.isAdmin ? 'Revoke Admin' : 'Make Admin'}
                     </button>
                     <button
                       onClick={() => handleDeleteUserData(user.id)}
-                      className="py-2 px-4 rounded-md bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors duration-300 shadow-sm hover:shadow-md"
+                      className="py-2 px-4 rounded-md bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                     >
                       Delete Data
                     </button>
@@ -266,9 +269,9 @@ function AdminPanel({
           )}
         </div>
 
-        {/* Contest Join Requests Section */}
-        <div className={`p-6 rounded-lg shadow-lg transition-all duration-300
-          ${isDarkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gradient-to-br from-orange-50 to-yellow-100 border border-orange-200'}`}>
+        {/* Contest Join Requests Section: Enhanced background and shadow */}
+        <div className={`p-6 rounded-lg shadow-xl transition-all duration-300
+          ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gradient-to-br from-orange-50 to-yellow-100 border border-orange-200'}`}>
           <h3 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
             Contest Join Requests
           </h3>
@@ -279,8 +282,8 @@ function AdminPanel({
           ) : (
             <ul className="space-y-3 max-h-64 overflow-y-auto pr-2">
               {allPendingContestRequests.map((request) => (
-                <li key={request.id} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-lg shadow-sm
-                  ${isDarkMode ? 'bg-gray-800 text-gray-200 hover:bg-gray-700' : 'bg-white text-gray-700 hover:bg-gray-50'} transition-colors duration-200`}>
+                <li key={request.id} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-lg shadow-md
+                  ${isDarkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-50'} transition-colors duration-200`}>
                   <div className="flex-1 pr-4 mb-2 sm:mb-0">
                     <span className="font-semibold text-sm truncate">{request.userEmail}</span>
                     <span className="ml-2 text-xs px-2 py-1 rounded-full bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
@@ -293,13 +296,13 @@ function AdminPanel({
                   <div className="flex flex-wrap gap-2 justify-end">
                     <button
                       onClick={() => handleAcceptJoinRequest(request.id)}
-                      className="py-2 px-4 rounded-md bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition-colors duration-300 shadow-sm hover:shadow-md"
+                      className="py-2 px-4 rounded-md bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition-colors duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     >
                       Accept
                     </button>
                     <button
                       onClick={() => handleRejectJoinRequest(request.id)}
-                      className="py-2 px-4 rounded-md bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors duration-300 shadow-sm hover:shadow-md"
+                      className="py-2 px-4 rounded-md bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                     >
                       Reject
                     </button>

@@ -19,9 +19,9 @@ import {
   getDoc,
   setDoc,
   deleteDoc,
-  writeBatch, // Import writeBatch for atomic operations
-  where, // Import where for queries
-  getDocs, // <--- ADDED THIS IMPORT
+  writeBatch,
+  where,
+  getDocs,
   updateDoc 
 } from 'firebase/firestore';
 
@@ -31,7 +31,7 @@ import AdminPanel from './components/AdminPanel';
 import TypingTest from './components/TypingTest';
 import Leaderboard from './components/Leaderboard';
 import UserHistory from './components/UserHistory';
-import ContestRequestModal from './components/ContestRequestModal'; // New import
+import ContestRequestModal from './components/ContestRequestModal';
 
 // IMPORTANT: Add this script tag to your public/index.html file in the <head> or <body>
 // <script src="https://js.puter.com/v2/"></script>
@@ -83,22 +83,15 @@ function App() {
   const [customText, setCustomText] = useState('');
   const [useCustomText, setUseCustomText] = useState(false);
   const [contestTexts, setContestTexts] = useState([]);
-  const [usersData, setUsersData] = useState([]); // New state for all users in admin panel
-
-  // --- Authentication States ---
+  const [usersData, setUsersData] = useState([]);
   const [showAuthModal, setShowAuthModal] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
-
-  // --- Admin Panel States ---
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [adminMessage, setAdminMessage] = useState('');
-
-  // --- Contest Request States ---
   const [showContestRequestModal, setShowContestRequestModal] = useState(false);
-  const [userContestRequests, setUserContestRequests] = useState([]); // Requests made by current user
-  const [allPendingContestRequests, setAllPendingContestRequests] = useState([]); // All pending requests for admin
-
+  const [userContestRequests, setUserContestRequests] = useState([]);
+  const [allPendingContestRequests, setAllPendingContestRequests] = useState([]);
 
   // --- Firebase Initialization and Auth Listener ---
   useEffect(() => {
@@ -109,7 +102,6 @@ function App() {
         console.log("Firebase user signed in:", user.uid, user.email);
         setShowAuthModal(false);
 
-        // Check for admin role
         const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
         try {
           const userDocSnap = await getDoc(userDocRef);
@@ -118,19 +110,18 @@ function App() {
             console.log("User is an administrator.");
           } else {
             setIsAdmin(false);
-            setUseCustomText(false); // Disable custom text for non-admins
+            setUseCustomText(false);
           }
         } catch (e) {
           console.error("Error checking admin role:", e);
           setIsAdmin(false);
-          setUseCustomText(false); // Disable custom text on error
+          setUseCustomText(false);
         }
-
       } else {
         setUserId(null);
         setUserEmail(null);
         setIsAdmin(false);
-        setUseCustomText(false); // Always disable custom text when logged out
+        setUseCustomText(false);
         setShowAuthModal(true);
         console.log("No Firebase user signed in. Showing login/signup modal.");
       }
@@ -139,7 +130,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- Fetch Data (Leaderboard, User History, Contest Texts, Users for Admin, Contest Requests) ---
+  // --- Fetch Data ---
   useEffect(() => {
     if (!userId) {
       setLeaderboard([]);
@@ -151,7 +142,6 @@ function App() {
       return;
     }
 
-    // Fetch Leaderboard (public data)
     const leaderboardRef = collection(db, `artifacts/${appId}/public/data/scores`);
     const qLeaderboard = query(leaderboardRef, orderBy("wpm", "desc"), limit(10));
     const unsubscribeLeaderboard = onSnapshot(qLeaderboard, (snapshot) => {
@@ -162,7 +152,6 @@ function App() {
       setError("Failed to load leaderboard.");
     });
 
-    // Fetch User History (private data - only for logged-in users)
     let unsubscribeUserHistory;
     if (userEmail) {
       const userHistoryRef = collection(db, `artifacts/${appId}/users/${userId}/my_scores`);
@@ -178,7 +167,6 @@ function App() {
       setUserHistory([]);
     }
 
-    // Fetch Contest Texts (public data for all users)
     const contestTextsRef = collection(db, `artifacts/${appId}/public/data/contestTexts`);
     const qContestTexts = query(contestTextsRef, orderBy("timestamp", "desc"));
     const unsubscribeContestTexts = onSnapshot(qContestTexts, (snapshot) => {
@@ -189,51 +177,49 @@ function App() {
       setError("Failed to load contest texts.");
     });
 
-    // Fetch Users Data for Admin Panel (only if admin)
     let unsubscribeUsersData;
     if (isAdmin) {
-        const allScoresQuery = query(collection(db, `artifacts/${appId}/public/data/scores`));
-        unsubscribeUsersData = onSnapshot(allScoresQuery, async (snapshot) => {
-            const uniqueUsers = new Map();
-            for (const scoreDoc of snapshot.docs) {
-                const scoreData = scoreDoc.data();
-                if (!uniqueUsers.has(scoreData.userId)) {
-                    const userProfileRef = doc(db, `artifacts/${appId}/users/${scoreData.userId}/profile/data`);
-                    try {
-                        const profileSnap = await getDoc(userProfileRef);
-                        if (profileSnap.exists()) {
-                            uniqueUsers.set(scoreData.userId, {
-                                id: scoreData.userId,
-                                email: profileSnap.data().email,
-                                isAdmin: profileSnap.data().isAdmin || false,
-                            });
-                        } else {
-                            uniqueUsers.set(scoreData.userId, {
-                                id: scoreData.userId,
-                                email: scoreData.userName || `User-${scoreData.userId.substring(0, 6)}`,
-                                isAdmin: false,
-                            });
-                        }
-                    } catch (profileError) {
-                        console.error(`Error fetching profile for ${scoreData.userId}:`, profileError);
-                        uniqueUsers.set(scoreData.userId, {
-                            id: scoreData.userId,
-                            email: scoreData.userName || `User-${scoreData.userId.substring(0, 6)}`,
-                            isAdmin: false,
-                        });
-                    }
-                }
+      const allScoresQuery = query(collection(db, `artifacts/${appId}/public/data/scores`));
+      unsubscribeUsersData = onSnapshot(allScoresQuery, async (snapshot) => {
+        const uniqueUsers = new Map();
+        for (const scoreDoc of snapshot.docs) {
+          const scoreData = scoreDoc.data();
+          if (!uniqueUsers.has(scoreData.userId)) {
+            const userProfileRef = doc(db, `artifacts/${appId}/users/${scoreData.userId}/profile/data`);
+            try {
+              const profileSnap = await getDoc(userProfileRef);
+              if (profileSnap.exists()) {
+                uniqueUsers.set(scoreData.userId, {
+                  id: scoreData.userId,
+                  email: profileSnap.data().email,
+                  isAdmin: profileSnap.data().isAdmin || false,
+                });
+              } else {
+                uniqueUsers.set(scoreData.userId, {
+                  id: scoreData.userId,
+                  email: scoreData.userName || `User-${scoreData.userId.substring(0, 6)}`,
+                  isAdmin: false,
+                });
+              }
+            } catch (profileError) {
+              console.error(`Error fetching profile for ${scoreData.userId}:`, profileError);
+              uniqueUsers.set(scoreData.userId, {
+                id: scoreData.userId,
+                email: scoreData.userName || `User-${scoreData.userId.substring(0, 6)}`,
+                isAdmin: false,
+              });
             }
-            setUsersData(Array.from(uniqueUsers.values()));
-        }, (err) => {
-            console.error("Error fetching users data for admin panel:", err);
-            setAdminMessage("Failed to load users data for admin panel.");
-        });
+          }
+        }
+        setUsersData(Array.from(uniqueUsers.values()));
+      }, (err) => {
+        console.error("Error fetching users data for admin panel:", err);
+        setAdminMessage("Failed to load users data for admin panel.");
+      });
     } else {
-        setUsersData([]);
+      setUsersData([]);
     }
 
-    // Fetch Current User's Contest Requests (for non-admins)
     let unsubscribeUserRequests;
     if (userEmail && !isAdmin) {
       const userRequestsRef = collection(db, `artifacts/${appId}/public/data/contestJoinRequests`);
@@ -249,7 +235,6 @@ function App() {
       setUserContestRequests([]);
     }
 
-    // Fetch All Pending Contest Requests (for admins)
     let unsubscribeAllPendingRequests;
     if (isAdmin) {
       const allRequestsRef = collection(db, `artifacts/${appId}/public/data/contestJoinRequests`);
@@ -265,24 +250,15 @@ function App() {
       setAllPendingContestRequests([]);
     }
 
-
     return () => {
       unsubscribeLeaderboard();
-      if (unsubscribeUserHistory) {
-        unsubscribeUserHistory();
-      }
+      if (unsubscribeUserHistory) unsubscribeUserHistory();
       unsubscribeContestTexts();
-      if (unsubscribeUsersData) {
-        unsubscribeUsersData();
-      }
-      if (unsubscribeUserRequests) {
-        unsubscribeUserRequests();
-      }
-      if (unsubscribeAllPendingRequests) {
-        unsubscribeAllPendingRequests();
-      }
+      if (unsubscribeUsersData) unsubscribeUsersData();
+      if (unsubscribeUserRequests) unsubscribeUserRequests();
+      if (unsubscribeAllPendingRequests) unsubscribeAllPendingRequests();
     };
-  }, [userId, userEmail, isAdmin]); // Depend on isAdmin to re-fetch user data for admin panel
+  }, [userId, userEmail, isAdmin]);
 
   // --- Initial Text Generation & Input Focus ---
   useEffect(() => {
@@ -319,14 +295,12 @@ function App() {
     setTextToType('');
     setUserInput('');
 
-    // Only use custom text if the user is an admin AND has selected it
     if (isAdmin && useCustomText && customText.trim() !== '') {
       setTextToType(customText.trim());
       setIsLoading(false);
       return;
     }
 
-    // Prioritize contest texts if available and custom text is not selected (or user is not admin)
     if ((!useCustomText || !isAdmin) && contestTexts.length > 0) {
       const randomIndex = Math.floor(Math.random() * contestTexts.length);
       setTextToType(contestTexts[randomIndex].text);
@@ -334,18 +308,15 @@ function App() {
       return;
     }
 
-    // Fallback to AI-generated sentence if no custom text (or not admin), and no contest texts
-    // This is the new functionality for normal users using Puter.js
     if (!isAdmin && typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
       try {
         const prompt = "Generate a short, interesting sentence suitable for a typing test. It should be grammatically correct and not too complex. Max 100 characters.";
-        const rawResponse = await puter.ai.chat(prompt, { model: "gpt-4o-mini" }); // Using a common free model
+        const rawResponse = await puter.ai.chat(prompt, { model: "gpt-4o-mini" });
 
         let generatedText = '';
         if (typeof rawResponse === 'string') {
           generatedText = rawResponse;
         } else if (rawResponse && typeof rawResponse === 'object') {
-          // Common patterns for AI response objects
           if (rawResponse.text && typeof rawResponse.text === 'string') {
             generatedText = rawResponse.text;
           } else if (rawResponse.content && typeof rawResponse.content === 'string') {
@@ -353,7 +324,6 @@ function App() {
           } else if (rawResponse.message && rawResponse.message.content && typeof rawResponse.message.content === 'string') {
             generatedText = rawResponse.message.content;
           } else {
-            // Fallback if structure is unknown, try converting the object to string
             generatedText = JSON.stringify(rawResponse);
             console.warn("Puter.js response was an object with unknown text property. Stringifying it:", rawResponse);
           }
@@ -371,10 +341,9 @@ function App() {
       } finally {
         setIsLoading(false);
       }
-      return; // Exit after attempting AI generation
+      return;
     }
 
-    // Fallback to JSONPlaceholder if Puter.js is not available or not used by non-admin
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -419,7 +388,6 @@ function App() {
     setWpm(0);
     setAccuracy(0);
     clearInterval(timerIntervalRef.current);
-    // Focus handled by TypingTest component's internal ref logic
   };
 
   // --- Input Change Handler ---
@@ -478,7 +446,6 @@ function App() {
           text: textToType.substring(0, 100) + (textToType.length > 100 ? '...' : '')
         });
         console.log("Score added to user history!");
-
       } catch (e) {
         console.error("Error adding document: ", e);
         setError("Failed to save score.");
@@ -488,7 +455,7 @@ function App() {
     }
   };
 
-  // --- Authentication Handlers (passed to AuthModal) ---
+  // --- Authentication Handlers ---
   const handleLogin = async (email, password) => {
     setAuthMessage('');
     try {
@@ -527,7 +494,7 @@ function App() {
     }
   };
 
-  // --- Admin Panel Handlers (passed to AdminPanel) ---
+  // --- Admin Panel Handlers ---
   const handleAddContestText = async (text, difficulty, category) => {
     setAdminMessage('');
     if (text.trim() === '') {
@@ -562,36 +529,29 @@ function App() {
 
   const handleDeleteUserData = async (targetUserId) => {
     setAdminMessage('');
-    // Use a custom modal/confirmation dialog instead of window.confirm
-    // For simplicity, using window.confirm here, but replace in a real app.
     if (!window.confirm(`Are you sure you want to delete all data for user ${targetUserId}? This cannot be undone.`)) {
       return;
     }
     try {
       const batch = writeBatch(db);
 
-      // 1. Delete user's profile data
       const userProfileRef = doc(db, `artifacts/${appId}/users/${targetUserId}/profile/data`);
       batch.delete(userProfileRef);
 
-      // 2. Delete user's private scores (my_scores subcollection)
       const userScoresCollectionRef = collection(db, `artifacts/${appId}/users/${targetUserId}/my_scores`);
-      const userScoresSnapshot = await getDocs(query(userScoresCollectionRef, limit(100))); // Use getDocs for a snapshot
+      const userScoresSnapshot = await getDocs(query(userScoresCollectionRef, limit(100)));
       userScoresSnapshot.docs.forEach(doc => {
         batch.delete(doc.ref);
       });
 
-      // 3. Delete user's public scores from the main leaderboard
       const publicScoresQuery = query(collection(db, `artifacts/${appId}/public/data/scores`), where("userId", "==", targetUserId));
-      const publicScoresSnapshot = await getDocs(publicScoresQuery); // Use getDocs for a snapshot
+      const publicScoresSnapshot = await getDocs(publicScoresQuery);
       publicScoresSnapshot.docs.forEach(doc => {
         batch.delete(doc.ref);
       });
 
       await batch.commit();
       setAdminMessage(`Data for user ${targetUserId} deleted successfully!`);
-      // Note: This does NOT delete the Firebase Authentication user.
-      // That requires Firebase Admin SDK on a backend.
     } catch (e) {
       console.error("Error deleting user data:", e);
       setAdminMessage(`Failed to delete data for user ${targetUserId}: ${e.message}`);
@@ -616,7 +576,6 @@ function App() {
       setError("You must be logged in to send a join request.");
       return;
     }
-    // Check if a request already exists for this user and contest
     const existingRequestQuery = query(
       collection(db, `artifacts/${appId}/public/data/contestJoinRequests`),
       where("userId", "==", userId),
@@ -632,13 +591,13 @@ function App() {
     try {
       await addDoc(collection(db, `artifacts/${appId}/public/data/contestJoinRequests`), {
         contestId: contestId,
-        contestText: contestText, // Store text snippet for admin context
+        contestText: contestText,
         userId: userId,
         userEmail: userEmail,
         status: 'pending',
         timestamp: Date.now()
       });
-      setError(null); // Clear any previous error
+      setError(null);
       console.log("Join request sent successfully!");
     } catch (e) {
       console.error("Error sending join request:", e);
@@ -670,17 +629,27 @@ function App() {
     }
   };
 
-
   return (
-    <div className={`min-h-screen flex items-center justify-center p-4 font-inter transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-blue-100 to-purple-200'}`}>
-      {/* Custom CSS for animations and modal */}
+    <div className={`min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-6 font-inter transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-blue-100 to-purple-200'}`}>
+      {/* Custom CSS for animations and responsive modal */}
       <style>
         {`
-          @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
-          .animate-pop-in { animation: popIn 0.3s ease-out forwards; }
+          @keyframes popIn { 
+            0% { opacity: 0; transform: scale(0.8); } 
+            100% { opacity: 1; transform: scale(1); } 
+          }
+          .animate-pop-in { 
+            animation: popIn 0.3s ease-out forwards; 
+          }
 
-          @keyframes fadeInBounce { 0% { opacity: 0; transform: translateY(20px); } 60% { opacity: 1; transform: translateY(-5px); } 100% { transform: translateY(0); } }
-          .animate-fade-in-bounce { animation: fadeInBounce 0.6s ease-out forwards; }
+          @keyframes fadeInBounce { 
+            0% { opacity: 0; transform: translateY(20px); } 
+            60% { opacity: 1; transform: translateY(-5px); } 
+            100% { transform: translateY(0); } 
+          }
+          .animate-fade-in-bounce { 
+            animation: fadeInBounce 0.6s ease-out forwards; 
+          }
 
           .modal-overlay {
             position: fixed;
@@ -693,31 +662,40 @@ function App() {
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            overflow-y: auto;
+            padding: 1rem;
           }
           .modal-content {
             background-color: white;
-            padding: 2rem;
+            padding: 1rem sm:p-2 md:p-3 lg:p-4;
             border-radius: 0.75rem;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 400px;
+            width: 100%;
+            max-width: 90vw sm:max-w-[400px] md:max-w-[500px];
             position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
           }
           .dark .modal-content {
-            background-color: #374151; /* gray-700 */
+            background-color: #374151;
             color: white;
+          }
+          @media (max-width: 640px) {
+            .modal-content {
+              padding: 0.75rem;
+            }
           }
         `}
       </style>
 
-      <div className={`p-8 rounded-xl shadow-2xl w-full max-w-2xl text-center border-b-4 animate-fade-in-bounce transition-colors duration-300
+      <div className={`p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-[95vw] sm:max-w-4xl md:max-w-3xl lg:max-w-2xl text-center border-b-4 animate-fade-in-bounce transition-colors duration-300
         ${isDarkMode ? 'bg-gray-800 border-blue-700' : 'bg-white border-blue-500'}`}>
 
-        <div className="flex justify-between items-center mb-6">
-          <h1 className={`text-4xl font-extrabold drop-shadow-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-6">
+          <h1 className={`text-2xl sm:text-3xl md:text-4xl font-extrabold drop-shadow-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4 sm:mb-0`}>
             Master Of Keys
           </h1>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2 sm:gap-4">
             {/* Dark Mode Toggle Button */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -725,11 +703,11 @@ function App() {
               aria-label="Toggle dark mode"
             >
               {isDarkMode ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h1M3 12H2m8.003-9.997a5 5 0 013.997 0M12 7a5 5 0 015 5c0 1.95-.79 3.71-2.07 4.93A8.003 8.003 0 0012 20a8 8 0 00-4.93-2.07A5 5 0 0112 7z" />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
               )}
@@ -740,22 +718,22 @@ function App() {
                 {isAdmin && (
                   <button
                     onClick={() => setShowAdminPanel(true)}
-                    className="py-2 px-4 rounded-md bg-purple-600 hover:bg-purple-700 text-white font-semibold transition-colors duration-300"
+                    className="py-1.5 px-3 sm:py-2 sm:px-4 rounded-md bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm sm:text-base transition-colors duration-300"
                   >
                     Admin Panel
                   </button>
                 )}
-                {!isAdmin && ( // Show "Join Contest" button for non-admins
-                   <button
-                   onClick={() => setShowContestRequestModal(true)}
-                   className="py-2 px-4 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors duration-300"
-                 >
-                   Join Contest
-                 </button>
+                {!isAdmin && (
+                  <button
+                    onClick={() => setShowContestRequestModal(true)}
+                    className="py-1.5 px-3 sm:py-2 sm:px-4 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm sm:text-base transition-colors duration-300"
+                  >
+                    Join Contest
+                  </button>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="py-2 px-4 rounded-md bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors duration-300"
+                  className="py-1.5 px-3 sm:py-2 sm:px-4 rounded-md bg-red-500 hover:bg-red-600 text-white font-semibold text-sm sm:text-base transition-colors duration-300"
                 >
                   Logout
                 </button>
@@ -764,10 +742,10 @@ function App() {
               <button
                 onClick={() => {
                   setShowAuthModal(true);
-                  setIsRegistering(false); // Default to login form
-                  setAuthMessage(''); // Clear previous messages
+                  setIsRegistering(false);
+                  setAuthMessage('');
                 }}
-                className="py-2 px-4 rounded-md bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-colors duration-300"
+                className="py-1.5 px-3 sm:py-2 sm:px-4 rounded-md bg-blue-500 hover:bg-blue-600 text-white font-semibold text-sm sm:text-base transition-colors duration-300"
               >
                 Login / Signup
               </button>
@@ -777,7 +755,7 @@ function App() {
 
         {/* User Info Display */}
         {userEmail && (
-          <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          <p className={`text-xs sm:text-sm mb-3 sm:mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             Logged in as: <span className="font-semibold text-blue-600 dark:text-blue-400">{userEmail}</span>
           </p>
         )}
@@ -804,7 +782,7 @@ function App() {
         />
 
         {/* Leaderboard and User History */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="mt-6 sm:mt-8 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
           <Leaderboard leaderboard={leaderboard} isDarkMode={isDarkMode} />
           <UserHistory userHistory={userHistory} userEmail={userEmail} isDarkMode={isDarkMode} />
         </div>
@@ -841,7 +819,7 @@ function App() {
         />
       )}
 
-      {/* Contest Request Modal (for non-admins) */}
+      {/* Contest Request Modal */}
       {!isAdmin && userEmail && (
         <ContestRequestModal
           showModal={showContestRequestModal}
